@@ -15,16 +15,16 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
     );
   
   }
-  const SimpleCounter = await deploy("SimpleCounter", {
+  const SimpleCounter = await deploy("SimpleCounterMulticall", {
     from: deployer,
     log: !isHardhat,
   });
-console.log("SimpleCounter deployed to", SimpleCounter.address);
+console.log("SimpleCounterMulticall deployed to", SimpleCounter.address);
 
 };
 
 
 
-func.tags = ["SimpleCounter"];
+func.tags = ["Multicall"];
 
 export default func;

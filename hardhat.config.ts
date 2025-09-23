@@ -15,10 +15,11 @@ dotenv.config({ path: __dirname + "/.env" });
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const accounts: string[] =  PRIVATE_KEY ? [PRIVATE_KEY] : [];
-
+const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY;
+const ALCHEMY_KEY  = process.env.ALCHEMY_KEY
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "clinkTestnet",
+  defaultNetwork: "hardhat",
 
   // hardhat-deploy
   namedAccounts: {
@@ -26,61 +27,45 @@ const config: HardhatUserConfig = {
       default: 0,
     },
   },
-
   networks: {
+    
     hardhat: {
-      forking: {
-        url: `https://public-node.rsk.co`,
-        //blockNumber:1 ,
-      },
+      // Remove forking for local testing
     },
 
     // Shared Testnet
-   blueberry: {
+   synFuturesABCTestnet: {
       accounts,
-      chainId: 88153591557,
-      url: `https://public-node.rsk.co`,
+      chainId: 20250903,
+      url: `https://rpc.synfutures-abc-testnet.raas.gelato.cloud`,
     },
-    raspberry: {
-      accounts,
-      chainId: 123420111,
-      url: `https://rpc.opcelestia-raspberry.gelato.digital`,
-    },
-    rootstock: {
-      accounts,
-      chainId: 30,
-      url: `https://public-node.rsk.co`,
+    baseSepolia: {
+      chainId: 84532,
+      url: `https://base-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+      accounts
     },
   },
   etherscan: {
     apiKey: {
-      blueberry: "xxx",
-      clinkTestnet: "xxx"
+      synFuturesABCTestnet: "xxx",
+      sepolia: ETHERSCAN_KEY as string,
     },
     customChains: [
       {
-        network: "blueberry",
-        chainId: 88153591557,
+        network: "synFuturesABCTestnet",
+        chainId: 20250903,
         urls: {
-          apiURL: "https://arb-blueberry.gelatoscout.com/api",
-          browserURL: "https://arb-blueberry.gelatoscout.com"
+          apiURL: "https://synfutures-abc-testnet.cloud.blockscout.com/api",
+          browserURL: "https://synfutures-abc-testnet.cloud.blockscout.com"
         }
       },
-      {
-        network: "clinkTestnet",
-        chainId: 123420000987,
-        urls: {
-          apiURL: "https://c1-testnet.cloud.blockscout.com/api",
-          browserURL: "https://c1-testnet.cloud.blockscout.com"
-        }
-      }
     ]
   },
 
   solidity: {
     compilers: [
       {
-        version: "0.8.23",
+        version: "0.8.29",
 
         settings: {
           evmVersion: 'paris',

@@ -1,257 +1,440 @@
-# How To #5-6-7-8 on Gelato: Relay Methods
+# Converting Smart Contracts to Meta-Transaction Enabled Contracts
 
-## Introduction to Gelato Relay
+This guide demonstrates how to convert a simple smart contract into a meta-transaction enabled contract using EIP-712 standards and Gelato Relay for gasless transactions.
 
-Using Gelato Relay, we relay your user's transactions on-chain, enabling secure gasless transactions for an ultra smooth UX for your app. This allows for a variety of new web3 experiences, as the user can now pay by only signing a message, or their transaction costs can be sponsored by the developer. As long as the gas costs are covered in one of the multiple payment methods that Gelato supports, we handle the rest reliably, quickly and securely.
+## Table of Contents
 
-[![Video Walkthrough](https://img.youtube.com/vi/4g6k4bwjfno/0.jpg)](https://youtu.be/4g6k4bwjfno)
+1. [Overview](#overview)
+2. [Contract Conversion](#contract-conversion)
+3. [Signature Creation and Sponsored Calls](#signature-creation-and-sponsored-calls)
+4. [Complete Example](#complete-example)
+5. [Testing](#testing)
 
- <img src="docs/relay.png" width="500"/>
+## Overview
 
+Meta-transactions allow users to interact with smart contracts without paying gas fees. Instead, a relayer (like Gelato) pays the gas fees and executes the transaction on behalf of the user. This is achieved through:
 
+1. **EIP-712 Typed Data Signing**: Users sign structured data instead of raw transactions
+2. **Contract Inheritance**: Contracts inherit meta-transaction functionality
+3. **Signature Verification**: Contracts verify user signatures and execute functions on their behalf
 
-The Gelato Relay SDK provides developers with various methods to interact with Gelato's infrastructure. Below are four essential SDK methods:
 
-### ERC2771 MEthods
 
-#### sponsoredCallERC2771
 
-This method executes a function on behalf of the user, allowing them to submit tasks without holding any ETH in their wallets. It utilizes the EIP-2771 standard for meta transactions, enabling gasless transactions for users, and leverages Gelato 1balance for payment.
 
-[![Video Walkthrough](https://img.youtube.com/vi/P6LlzSzta1Q/0.jpg)](https://youtu.be/P6LlzSzta1Q)
 
-#### callWithSyncFeeERC2771
 
-Combining the features of `callWithSyncFee` and EIP-2771 meta transactions, this method provides gasless transaction capabilities. The target contract assumes responsibility for transferring the fee to Gelato's fee collector during transaction execution.
+## Contract Conversion
 
-[![Video Walkthrough](https://img.youtube.com/vi/v6cHdGTzf0c/0.jpg)](https://youtu.be/v6cHdGTzf0c)
+### Step 1: Original Simple Contract
 
-### NON ERC2771 MEthods
+Here's a basic counter contract:
 
-[![Video Walkthrough](https://img.youtube.com/vi/shqLPDerunY/0.jpg)](https://youtu.be/shqLPDerunY)
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.29;
 
-#### sponsoredCall
+contract SimpleCounter {
+    uint256 public counter;
 
-Similar to `sponsoredCallERC2771`, this method enables gasless transactions using a different approach, suitable for environments where you have your own authentication logic. Also making use of Gelato 1balance.
+    event IncrementCounter(address msgSender, uint256 newCounterValue, uint256 timestamp);
 
-#### callWithSyncFee
-
-When using callWithSyncFee relay method the target contract assumes responsibility for transferring the fee to Gelato's fee collector during transaction execution.
-
-
-
-
-
-
-
-## Backend/Node examples
-
-> [!IMPORTANT]  
-> "@gelatonetwork/relay-sdk": "^5.5.0",
-
-### Environment Setup
-
-Please copy `.env.example` to `.env` and add the following variables:
-
-- GELATO_RELAY_API_KEY
-- PRIVATE_KEY
-- ALCHEMY_ID
-
-### sponsoredCallERC2771
-
-```
-yarn testSponsoredCallERC2771
-```
-
-code can be found [here](scripts/testSponsoredCallERC2771.ts) and here the [docs](https://docs.gelato.network/developer-services/relay/erc-2771-recommended/sponsoredcallerc2771)
-
-### sponsoredCall
-
-```
-yarn testSponsoredCall
-```
-
-code can be found [here](scripts/testSponsoredCall.ts) and here the [docs](https://docs.gelato.network/developer-services/relay/non-erc-2771/sponsoredcall)
-
-### callWithSyncFee
-
-```
-yarn testCallWithSyncFee
-```
-
-code can be found [here](scripts/testCallWithSyncFee.ts) and here the [docs](https://docs.gelato.network/developer-services/relay/non-erc-2771/callwithsyncfee)
-
-### callWithSyncFeeERC2771
-
-```
-yarn testCallWithSyncFeeERC2771
-```
-
-code can be found [here](scripts/testCallWithSyncFeeERC2771.ts) and here the [docs](https://docs.gelato.network/developer-services/relay/erc-2771-recommended/callwithsyncfeeerc2771)
-
-### concurrentSponsoredCallERC2771
-
-```
-yarn testConcurrentSponsoredCallERC2771
-```
-
-code can be found [here](scripts/testConcurrentSponsoredCallERC2771.ts) and here the [docs](https://docs.gelato.network/developer-services/relay/erc-2771-recommended/sponsoredcallerc2771#parameters-for-concurrent-requests)
-
-### getSignatureDataERC2771 with sponsoredCallERC2771WithSignature
-
-```
-yarn testSponsoredCallERC2771WithSignature
-```
-
-code can be found [here](scripts/testSponsoredCallERC2771WithSignature.ts) and here the [docs](https://docs.gelato.network/developer-services/relay/erc-2771-recommended/sponsoredcallerc2771#getdatatosignerc2771)
-
-### getDataToSignERC2771 with sponsoredCallERC2771WithSignature
-
-```
-yarn testSponsoredGetDataToSignERC2771
-```
-
-code can be found [here](scripts/testSponsoredGetDataToSignERC2771.ts) and here the [docs](https://docs.gelato.network/developer-services/relay/erc-2771-recommended/sponsoredcallerc2771#getdatatosignerc2771)
-
-### getSignatureDataERC2771 with callWithSyncFeeERC2771WithSignature
-
-```
-yarn testCallWithSyncFeeERC2771WithSignature
-```
-
-code can be found [here](scripts/testCallWithSyncFeeERC2771WithSignature.ts) and here the [docs](https://docs.gelato.network/developer-services/relay/erc-2771-recommended/callwithsyncfeeerc2771#getsignaturedataerc2771)
-
-### getDataToSignERC2771 with callWithSyncFeeERC2771WithSignature
-
-```
-yarn testCallWithSyncFeeGetDataToSignERC2771
-```
-
-code can be found [here](scripts/testCallWithSyncFeeGetDataToSignERC2771.ts) and here the [docs]( and here the [docs](https://docs.gelato.network/developer-services/relay/erc-2771-recommended/callwithsyncfeeerc2771#getsignaturedataerc2771)
-)
-
-## Tracking your Relay Request
-
-### WebSocket Subscription
-
-Docs can be found [here](https://docs.gelato.network/developer-services/relay/tracking-your-relay-request#websocket-subscriptions)
-
-[Relay-sdk Implementation](src/components/App/index.tsx#L121)
-
-```typescript
-relay.onTaskStatusUpdate((taskStatus: TransactionStatusResponse) => {
-  console.log("Task status update", taskStatus);
-  fetchStatusSocket(taskStatus, setMessage, setLoading);
-});
-```
-
-[Websocket API](src/components/App/index.tsx#L161)
-
-```typescript
-const relayStatusWs = new WebSocket("wss://api.gelato.digital/tasks/ws/status");
-relayStatusWs.onopen = (event) => {
-  relayStatusWs.send(
-    JSON.stringify({
-      action: "subscribe" as string,
-      taskId: response.taskId,
-    }),
-  );
-  relayStatusWs.onmessage = (event) => {
-    fetchStatusSocket(JSON.parse(event.data).payload, setMessage, setLoading);
-  };
-};
-```
-
-### Polling for Updates
-
-Docs can be found [here](https://docs.gelato.network/developer-services/relay/tracking-your-relay-request#polling-for-updates)
-
-[code](src/components/App/task.ts#L27)
-
-```typescript
-let status = await relay.getTaskStatus(taskIdToQuery);`
-```
-
-### Status
-
-Docs can be found [here](https://docs.gelato.network/developer-services/relay/tracking-your-relay-request#task-status-response)
-
-```typescript
-let details = {
-  txHash: status?.transactionHash || undefined,
-  chainId: status?.chainId?.toString() || undefined,
-  blockNumber: status?.blockNumber?.toString() || undefined,
-  executionDate: status?.executionDate || undefined,
-  creationnDate: status?.creationDate || undefined,
-  taskState: (status?.taskState as TaskState) || undefined,
-};
-let body = ``;
-let header = ``;
-
-let txHash = details.txHash;
-
-switch (details.taskState!) {
-  case TaskState.WaitingForConfirmation:
-    header = `Transaction Relayed`;
-    body = `Waiting for Confirmation`;
-    break;
-  case TaskState.Pending:
-    header = `Transaction Relayed`;
-    body = `Pending Status`;
-
-    break;
-  case TaskState.CheckPending:
-    header = `Transaction Relayed`;
-    body = `Simulating Transaction`;
-
-    break;
-  case TaskState.ExecPending:
-    header = `Transaction Relayed`;
-    body = `Pending Execution`;
-    break;
-  case TaskState.ExecSuccess:
-    header = `Transaction Executed`;
-    body = `Waiting to refresh...`;
-
-    destroyFetchTask.next();
-    setTimeout(() => {
-      console.log("finish");
-      setLoading(false);
-    }, 2000);
-
-    break;
-  case TaskState.Cancelled:
-    header = `Canceled`;
-    body = `TxHash: ${details.txHash}`;
-    destroyFetchTask.next();
-    break;
-  case TaskState.ExecReverted:
-    header = `Reverted`;
-    body = `TxHash: ${details.txHash}`;
-    destroyFetchTask.next();
-    break;
-  case TaskState.NotFound:
-    header = `Not Found`;
-    body = `TxHash: ${details.txHash}`;
-    destroyFetchTask.next();
-    break;
-  case TaskState.Blacklisted:
-    header = `BlackListed`;
-    body = `TxHash: ${details.txHash}`;
-    destroyFetchTask.next();
-    break;
-  default:
-    break;
+    function increment() external {
+        counter++;
+        emit IncrementCounter(msg.sender, counter, block.timestamp);
+    }
 }
 ```
 
-## Gelato Relay Contracts on Arbitrum Blueberry
+### Step 2: Convert to Meta-Transaction Enabled Contract
 
-| Contract Name              | Blueberry GelatoScout Link                                                                            |
-| -------------------------- | ----------------------------------------------------------------------------------------------------- |
-| CounterFeeCollector        | [Link](https://arb-blueberry.gelatoscout.com/address/0xFb49001366fC0b23B4892909426bd3796958b6D4#code) |
-| CounterFeeCollectorERC2771 | [Link](https://arb-blueberry.gelatoscout.com/address/0xBa533674443E017828249eE78a5eCc4b71faC579#code) |
-| CounterRelayContext        | [Link](https://arb-blueberry.gelatoscout.com/address/0x0c3E7A7B6D1e0f26e87CE3BFA19616c8062Db3bB#code) |
-| CounterRelayContextERC2771 | [Link](https://arb-blueberry.gelatoscout.com/address/0x05E1D00A790a2dBDD4757270ddec5198313d4759#code) |
-| OneBalanceCounterERC2771   | [Link](https://arb-blueberry.gelatoscout.com/address/0x5041c60C75633F29DEb2AED79cB0A9ed79202415)      |
-| OneBalanceSimpleCounter    | [Link](https://arb-blueberry.gelatoscout.com/address/0x04914ED9098f5447753cde4bbbBB0e07879f9689#code) |
+To enable meta-transactions, we need to:
+
+1. **Inherit from EIP712MetaTransaction**
+2. **Replace `msg.sender` with `msgSender()`**
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.29;
+
+import "./EIP712MetaTransaction.sol";
+
+contract SimpleCounter is EIP712MetaTransaction("SimpleCounter", "1") {
+    uint256 public counter;
+
+    event IncrementCounter(address msgSender, uint256 newCounterValue, uint256 timestamp);
+
+    function increment() external {
+        counter++;
+        emit IncrementCounter(msgSender(), counter, block.timestamp);
+    }
+}
+```
+
+### Key Changes Explained
+
+#### 1. Inheritance
+```solidity
+contract SimpleCounter is EIP712MetaTransaction("SimpleCounter", "1")
+```
+
+- Inherits from `EIP712MetaTransaction` 
+- Passes contract name (`"SimpleCounter"`) and version (`"1"`) for EIP-712 domain separation
+
+#### 2. msgSender() Function
+```solidity
+emit IncrementCounter(msgSender(), counter, block.timestamp);
+```
+
+- **`msg.sender`** → **`msgSender()`**
+- `msgSender()` returns the original user address in meta-transactions
+- `msg.sender` would return the relayer address (Gelato)
+
+### What EIP712MetaTransaction Provides
+
+The inherited contract automatically provides:
+
+- **`executeMetaTransaction()`**: Main function to execute meta-transactions
+- **`getNonce(address user)`**: Get user's nonce for replay protection
+- **`msgSender()`**: Returns the original user address
+- **EIP-712 domain separation**: Prevents signature collisions across contracts
+
+## Signature Creation and Sponsored Calls
+
+### Step 1: Setup EIP-712 Domain and Types
+
+```typescript
+import { GelatoRelay, SponsoredCallRequest } from "@gelatonetwork/relay-sdk";
+import { ethers } from "ethers";
+
+// EIP-712 type definitions
+const types = {
+  MetaTransaction: [
+    { name: "nonce", type: "uint256" },
+    { name: "from", type: "address" },
+    { name: "functionSignature", type: "bytes" },
+  ],
+};
+
+// Domain data for EIP-712
+let domainData = {
+  name: "SimpleCounter",
+  version: "1",
+  verifyingContract: simpleCounterAddress,
+  salt: ethers.zeroPadValue(ethers.toBeHex(chainId), 32),
+};
+```
+
+### Step 2: Prepare Transaction Data
+
+```typescript
+// Get user's current nonce
+const nonce = await simpleCounter.getNonce(signer.address);
+
+// Prepare the function call data
+const payload = await simpleCounter.increment.populateTransaction();
+
+// Create the message to sign
+let message = { 
+  nonce: parseInt(nonce), 
+  from: signer.address, 
+  functionSignature: payload.data 
+};
+```
+
+### Step 3: Sign the Typed Data
+
+```typescript
+// Sign using EIP-712 typed data
+const signature = await signer.signTypedData(domainData, types, message);
+
+// Extract v, r, s components
+const { r, s, v } = ethers.Signature.from(signature);
+```
+
+### Step 4: Create Meta-Transaction Payload
+
+```typescript
+// Create the meta-transaction call
+let metaPayload = await simpleCounter.executeMetaTransaction.populateTransaction(
+  signer.address, 
+  payload.data, 
+  r, 
+  s, 
+  v
+);
+```
+
+### Step 5: Send Sponsored Call via Gelato
+
+```typescript
+// Create Gelato relay request
+const request: SponsoredCallRequest = {
+  chainId,
+  target: simpleCounterAddress,
+  data: metaPayload.data as string,
+};
+
+// Send sponsored call
+const response = await relay.sponsoredCall(
+  request,
+  GELATO_RELAY_API_KEY as string,
+);
+
+console.log(`Task ID: ${response.taskId}`);
+console.log(`Status: https://relay.gelato.digital/tasks/status/${response.taskId}`);
+```
+
+## Complete Example
+
+### Contract Implementation
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.29;
+
+import "./EIP712MetaTransaction.sol";
+
+contract SimpleCounter is EIP712MetaTransaction("SimpleCounter", "1") {
+    uint256 public counter;
+
+    event IncrementCounter(address msgSender, uint256 newCounterValue, uint256 timestamp);
+
+    function increment() external {
+        counter++;
+        emit IncrementCounter(msgSender(), counter, block.timestamp);
+    }
+}
+```
+
+### Client Implementation
+
+```typescript
+import { GelatoRelay, SponsoredCallRequest } from "@gelatonetwork/relay-sdk";
+import { ethers } from "ethers";
+import * as dotenv from "dotenv";
+
+dotenv.config({ path: ".env" });
+
+const GELATO_RELAY_API_KEY = process.env.GELATO_RELAY_API_KEY;
+const RPC_URL = `https://rpc.synfutures-abc-testnet.raas.gelato.cloud`;
+
+const provider = new ethers.JsonRpcProvider(RPC_URL);
+const signer = new ethers.Wallet(process.env.PRIVATE_KEY as string, provider);
+const relay = new GelatoRelay();
+
+const executeMetaTransaction = async () => {
+  const simpleCounterAddress = "0x5115B85246bb32dCEd920dc6a33E2Be6E37fFf6F";
+  const abi = [
+    "function increment()",
+    "function counter() view returns (uint256)",
+    "function getNonce(address user) view returns (uint256)",
+    "function executeMetaTransaction(address userAddress, bytes memory functionSignature, bytes32 sigR, bytes32 sigS, uint8 sigV)"
+  ];
+
+  const chainId = (await provider.getNetwork()).chainId;
+  const simpleCounter = new ethers.Contract(simpleCounterAddress, abi, signer);
+
+  // EIP-712 setup
+  const types = {
+    MetaTransaction: [
+      { name: "nonce", type: "uint256" },
+      { name: "from", type: "address" },
+      { name: "functionSignature", type: "bytes" },
+    ],
+  };
+
+  let domainData = {
+    name: "SimpleCounter",
+    version: "1",
+    verifyingContract: simpleCounterAddress,
+    salt: ethers.zeroPadValue(ethers.toBeHex(chainId), 32),
+  };
+
+  // Prepare transaction
+  const nonce = await simpleCounter.getNonce(signer.address);
+  const payload = await simpleCounter.increment.populateTransaction();
+  let message = { 
+    nonce: parseInt(nonce), 
+    from: signer.address, 
+    functionSignature: payload.data 
+  };
+
+  // Sign and execute
+  const signature = await signer.signTypedData(domainData, types, message);
+  const { r, s, v } = ethers.Signature.from(signature);
+
+  let metaPayload = await simpleCounter.executeMetaTransaction.populateTransaction(
+    signer.address, 
+    payload.data, 
+    r, 
+    s, 
+    v
+  );
+
+  // Send via Gelato
+  const request: SponsoredCallRequest = {
+    chainId,
+    target: simpleCounterAddress,
+    data: metaPayload.data as string,
+  };
+
+  const response = await relay.sponsoredCall(request, GELATO_RELAY_API_KEY as string);
+  console.log(`https://relay.gelato.digital/tasks/status/${response.taskId}`);
+};
+
+executeMetaTransaction();
+```
+
+## Testing
+
+### Run Tests
+
+```bash
+# Test basic functionality
+npm test
+
+# Test sponsored call
+npm run testSponsoredCall
+```
+
+### Test Structure
+
+The test suite includes:
+
+1. **Basic increment test**: Verifies normal contract functionality
+2. **Meta-transaction test**: Tests meta-transaction execution locally
+3. **Gelato relay simulation**: Simulates the full relay process
+
+### Key Test Points
+
+- ✅ Contract compiles and deploys correctly
+- ✅ Meta-transaction signature verification works
+- ✅ `msgSender()` returns correct user address
+- ✅ Nonce increments properly
+- ✅ Gelato relay integration functions
+
+## Environment Setup
+
+Create a `.env` file with:
+
+```env
+GELATO_RELAY_API_KEY=your_gelato_api_key
+PRIVATE_KEY=your_private_key
+ALCHEMY_ID=your_alchemy_id // if required
+```
+
+## Multicall
+
+The `SimpleCounterMulticall` contract extends the basic meta-transaction functionality with a multicall feature that allows executing multiple function calls in a single transaction. This is particularly useful for batch operations and reducing gas costs.
+
+### Contract Implementation
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.29;
+
+import "./EIP712MetaTransaction.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+
+contract SimpleCounterMulticall is EIP712MetaTransaction("SimpleCounterMulticall", "1") {
+    uint256 public counter = 1;
+
+    event IncrementCounter(
+        address msgSender,
+        uint256 newCounterValue,
+        uint256 timestamp
+    );
+
+    function increment() external {
+        counter++;
+        emit IncrementCounter(msgSender(), counter, block.timestamp);
+    }
+
+    function multiply(uint256 count) external {
+        counter = counter * count;
+        emit IncrementCounter(msgSender(), counter, block.timestamp);
+    }
+
+    function multicall(
+        bytes[] calldata data
+    ) external returns (bytes[] memory results) {
+        results = new bytes[](data.length);
+        address sender = msgSender();
+        bool isEIP712 = msg.sender != sender;
+        for (uint256 i = 0; i < data.length; i++) {
+            if (isEIP712) {
+                results[i] = Address.functionDelegateCall(
+                    address(this),
+                    abi.encodePacked(data[i], sender)
+                );
+            } else {
+                results[i] = Address.functionDelegateCall(
+                    address(this),
+                    data[i]
+                );
+            }
+        }
+        return results;
+    }
+}
+```
+
+### How Multicall Works
+
+The `multicall` function allows you to execute multiple function calls atomically:
+
+1. **Input**: Takes an array of encoded function call data (`bytes[] calldata data`)
+2. **Processing**: Iterates through each function call and executes it via delegate call
+3. **Output**: Returns an array of results (`bytes[] memory results`)
+
+### Key Features
+
+#### 1. Meta-Transaction Support
+- **EIP-712 Detection**: Automatically detects if the call is coming from a meta-transaction (`isEIP712 = msg.sender != sender`)
+- **Sender Context**: For meta-transactions, it appends the original sender address to the function call data
+- **Delegate Calls**: Uses `Address.functionDelegateCall()` to execute functions in the context of the current contract
+
+#### 2. Atomic Execution
+- **All-or-Nothing**: If any function call fails, the entire multicall transaction reverts
+- **Gas Efficiency**: Reduces gas costs by batching multiple operations into a single transaction
+- **State Consistency**: Ensures all operations succeed or fail together
+
+### Usage Example
+
+```typescript
+// Prepare multiple function calls
+const incrementCall = await simpleCounterMulticall.increment.populateTransaction();
+const multiplyCall = await simpleCounterMulticall.multiply.populateTransaction(2);
+
+// Encode the multicall
+const multicallData = await simpleCounterMulticall.multicall.populateTransaction([
+    incrementCall.data,
+    multiplyCall.data
+]);
+
+// Execute as meta-transaction
+const metaPayload = await simpleCounterMulticall.executeMetaTransaction.populateTransaction(
+    signer.address,
+    multicallData.data,
+    r,
+    s,
+    v
+);
+```
+
+### Benefits
+
+1. **Gas Optimization**: Execute multiple operations in a single transaction
+2. **Atomic Operations**: Ensure all operations succeed or fail together
+3. **Meta-Transaction Compatible**: Works seamlessly with EIP-712 meta-transactions
+4. **Flexible**: Can call any function on the contract, not just predefined ones
+5. **Replay Protection**: Inherits nonce-based replay protection from the base contract
+
+### Use Cases
+
+- **Batch Updates**: Update multiple state variables in one transaction
+- **Complex Workflows**: Execute multi-step operations atomically
+- **Gas-Efficient Interactions**: Reduce transaction costs for users
+- **Meta-Transaction Batching**: Combine multiple meta-transactions into a single sponsored call
+
