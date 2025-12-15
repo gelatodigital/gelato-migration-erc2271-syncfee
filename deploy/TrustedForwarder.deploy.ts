@@ -2,7 +2,6 @@ import hre, { deployments, getNamedAccounts } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 
-
 const isHardhat = hre.network.name === "hardhat";
 
 const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
@@ -11,20 +10,18 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   if (!isHardhat) {
     console.log(
-      `\nDeploying Contracts to to ${hre.network.name}. Hit ctrl + c to abort`
+      `\nDeploying TrustedForwarder to ${hre.network.name}. Hit ctrl + c to abort`
     );
-  
   }
-  const SimpleCounter = await deploy("SimpleCounterMulticall", {
+
+  const TrustedForwarder = await deploy("TrustedForwarderERC2771", {
     from: deployer,
     log: !isHardhat,
   });
-console.log("SimpleCounterMulticall deployed to", SimpleCounter.address);
 
+  console.log("TrustedForwarderERC2771 deployed to", TrustedForwarder.address);
 };
 
-
-
-func.tags = ["Multicall"];
+func.tags = ["TrustedForwarder"];
 
 export default func;

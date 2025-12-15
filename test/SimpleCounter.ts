@@ -17,7 +17,7 @@ describe("Test SimpleCounter Smart Contract", function () {
       console.error("Test Suite is meant to be run on hardhat only");
       process.exit(1);
     }
-    await deployments.fixture();
+    await deployments.fixture(["SimpleCounter"]);
 
     [user, bundleSigner] = await hre.ethers.getSigners();
     userAddress = await user.getAddress();
