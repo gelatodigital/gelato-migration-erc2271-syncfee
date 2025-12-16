@@ -8,7 +8,10 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 // These demonstrate how to get fee information from the real Gelato API
 // =============================================================================
 
-const GELATO_RPC = "https://api.gelato.cloud/rpc";
+// Gelato RPC endpoints - try testnet endpoint for testnet chains
+const GELATO_RPC_MAINNET = "https://api.gelato.cloud/rpc";
+const GELATO_RPC_TESTNET = "https://api.t.gelato.cloud/rpc";
+const GELATO_API_KEY = process.env.GELATO_API_KEY;
 
 // Real chain and token for demonstrating API calls
 const BASE_SEPOLIA_CHAIN_ID = 84532;
@@ -20,9 +23,15 @@ interface Capabilities {
 }
 
 interface FeeData {
-  exchangeRate: string;
+  chainId: string;
+  expiry: number;
   gasPrice: string;
-  quoteExpiry: number;
+  rate: number;
+  token: {
+    address: string;
+    chainId: number;
+    decimals: number;
+  };
 }
 
 /**
@@ -31,35 +40,41 @@ interface FeeData {
  * @param apiKey - Optional API key (not required for getCapabilities)
  */
 async function getCapabilities(chainId: number, apiKey?: string): Promise<Capabilities | null> {
-  try {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (apiKey) headers["X-API-Key"] = apiKey;
+  // Try both mainnet and testnet endpoints
+  const endpoints = [GELATO_RPC_MAINNET, GELATO_RPC_TESTNET];
 
-    const response = await fetch(GELATO_RPC, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
+  for (const endpoint of endpoints) {
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (apiKey) headers["X-API-Key"] = apiKey;
+
+      const requestBody = {
         id: 1,
         jsonrpc: "2.0",
         method: "relayer_getCapabilities",
         params: [chainId.toString()],
-      }),
-    });
+      };
 
-    const data = await response.json();
-    if (data.error) {
-      console.log(`      API Error: ${JSON.stringify(data.error)}`);
-      return null;
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        continue;
+      }
+      if (!data.result || !data.result[chainId.toString()]) {
+        continue;
+      }
+      return data.result[chainId.toString()];
+    } catch (error) {
+      continue;
     }
-    if (!data.result || !data.result[chainId.toString()]) {
-      console.log(`      No capabilities found for chain ${chainId}`);
-      return null;
-    }
-    return data.result[chainId.toString()];
-  } catch (error) {
-    console.log(`      Failed to fetch capabilities: ${error}`);
-    return null;
   }
+  return null;
 }
 
 /**
@@ -69,55 +84,65 @@ async function getCapabilities(chainId: number, apiKey?: string): Promise<Capabi
  * @param apiKey - Optional API key
  */
 async function getFeeData(chainId: number, tokenAddress: string, apiKey?: string): Promise<FeeData | null> {
-  try {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (apiKey) headers["X-API-Key"] = apiKey;
+  // Try both mainnet and testnet endpoints
+  const endpoints = [GELATO_RPC_MAINNET, GELATO_RPC_TESTNET];
 
-    const response = await fetch(GELATO_RPC, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        id: 1,
-        jsonrpc: "2.0",
-        method: "relayer_getFeeData",
-        params: [chainId, tokenAddress],
-      }),
-    });
+  for (const endpoint of endpoints) {
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (apiKey) headers["X-API-Key"] = apiKey;
 
-    const data = await response.json();
-    if (data.error) {
-      console.log(`      API Error: ${JSON.stringify(data.error)}`);
-      return null;
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          id: 1,
+          jsonrpc: "2.0",
+          method: "relayer_getFeeData",
+          params: { chainId: chainId, token: tokenAddress },
+        }),
+      });
+
+      const data = await response.json();
+      if (data.error) {
+        continue;
+      }
+      if (!data.result) {
+        continue;
+      }
+      return data.result;
+    } catch (error) {
+      continue;
     }
-    if (!data.result) {
-      console.log(`      No fee data returned`);
-      return null;
-    }
-    return data.result;
-  } catch (error) {
-    console.log(`      Failed to fetch fee data: ${error}`);
-    return null;
   }
+  return null;
 }
 
 /**
  * Calculate fee amount based on estimated gas and fee data
  * @param estimatedGas - Estimated gas for the transaction
- * @param gasPrice - Current gas price from getFeeData
- * @param exchangeRate - Token exchange rate from getFeeData
+ * @param gasPrice - Current gas price in wei from getFeeData
+ * @param rate - Exchange rate (how many tokens per 1 ETH)
+ * @param tokenDecimals - Token decimals (e.g., 6 for USDC)
  * @param bufferPercent - Safety buffer percentage (default 50%)
  */
 function calculateFee(
   estimatedGas: bigint,
   gasPrice: string,
-  exchangeRate: string,
+  rate: number,
+  tokenDecimals: number,
   bufferPercent: number = 50
 ): bigint {
+  // gasCost in wei
   const gasCost = estimatedGas * BigInt(gasPrice);
   // Add buffer for safety margin
   const gasCostWithBuffer = (gasCost * BigInt(100 + bufferPercent)) / BigInt(100);
-  // Convert to token amount using exchange rate (rate is in 18 decimals)
-  const fee = (gasCostWithBuffer * BigInt(exchangeRate)) / BigInt(10 ** 18);
+
+  // Convert gas cost (wei) to token amount
+  // Formula: (gasCostInWei * rate * 10^tokenDecimals) / 10^18
+  // We use BigInt math with scaling to avoid precision loss
+  const scaledRate = BigInt(Math.floor(rate * 10 ** 12)); // Scale rate by 10^12 for precision
+  const fee = (gasCostWithBuffer * scaledRate * BigInt(10 ** tokenDecimals)) / BigInt(10 ** 18) / BigInt(10 ** 12);
   return fee;
 }
 
@@ -192,7 +217,7 @@ describe("Test SimpleCounterERC20Fee with ERC20 Fee Payment", function () {
 
       // Step 1: Get capabilities (fee collector and supported tokens)
       console.log(`      Calling relayer_getCapabilities for chain ${BASE_SEPOLIA_CHAIN_ID}...`);
-      const capabilities = await getCapabilities(BASE_SEPOLIA_CHAIN_ID);
+      const capabilities = await getCapabilities(BASE_SEPOLIA_CHAIN_ID, GELATO_API_KEY);
 
       if (!capabilities) {
         console.log("      Skipping API test - could not fetch capabilities");
@@ -219,7 +244,7 @@ describe("Test SimpleCounterERC20Fee with ERC20 Fee Payment", function () {
 
       // Step 2: Get fee data (exchange rate and gas price)
       console.log(`      Calling relayer_getFeeData for USDC...`);
-      const feeData = await getFeeData(BASE_SEPOLIA_CHAIN_ID, USDC_BASE_SEPOLIA);
+      const feeData = await getFeeData(BASE_SEPOLIA_CHAIN_ID, USDC_BASE_SEPOLIA, GELATO_API_KEY);
 
       if (!feeData) {
         console.log("      Skipping API test - could not fetch fee data");
@@ -227,16 +252,17 @@ describe("Test SimpleCounterERC20Fee with ERC20 Fee Payment", function () {
         return;
       }
 
-      console.log(`      Exchange Rate: ${feeData.exchangeRate}`);
+      console.log(`      Exchange Rate: ${feeData.rate}`);
       console.log(`      Gas Price: ${feeData.gasPrice}`);
-      console.log(`      Quote Expires: ${new Date(feeData.quoteExpiry * 1000).toISOString()}`);
+      console.log(`      Quote Expires: ${new Date(feeData.expiry * 1000).toISOString()}`);
 
       // Step 3: Calculate fee for estimated gas
       const estimatedGas = BigInt(150000); // Estimated gas for incrementWithPermit
       const calculatedFee = calculateFee(
         estimatedGas,
         feeData.gasPrice,
-        feeData.exchangeRate,
+        feeData.rate,
+        feeData.token.decimals,
         50 // 50% buffer
       );
 
