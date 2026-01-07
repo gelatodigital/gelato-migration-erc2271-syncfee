@@ -1,6 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
+/*//////////////////////////////////////////////////////////////
+//                                                            //
+//                 ⚠️  DISCLAIMER  ⚠️                          //
+//                                                            //
+//  This contract is provided as an EXAMPLE for educational   //
+//  purposes only. It has NOT been audited and may contain    //
+//  bugs or security vulnerabilities.                         //
+//                                                            //
+//  USE AT YOUR OWN RISK. The authors assume no liability     //
+//  for any losses or damages resulting from the use of       //
+//  this code.                                                //
+//                                                            //
+//  For production use, please ensure proper security audits  //
+//  are conducted by qualified professionals.                 //
+//                                                            //
+//////////////////////////////////////////////////////////////*/
+
 // ============ External Dependencies (OpenZeppelin) ============
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

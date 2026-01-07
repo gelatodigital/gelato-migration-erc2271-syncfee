@@ -8,8 +8,7 @@ import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol"
  * @notice A simple counter that trusts a TrustedForwarder for meta-transactions
  * @dev Inherits from OpenZeppelin's ERC2771Context to extract the original sender
  *
- * Unlike the EIP712MetaTransaction approach where the contract verifies signatures,
- * this contract delegates signature verification to the TrustedForwarder.
+ * This contract delegates signature verification to the TrustedForwarder.
  * The forwarder appends the original sender address to the calldata.
  */
 contract SimpleCounterTrusted is ERC2771Context {

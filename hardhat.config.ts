@@ -30,7 +30,12 @@ const config: HardhatUserConfig = {
   networks: {
     
     hardhat: {
-      // Remove forking for local testing
+      chainId: 41923, // EDU Chain ID for consistency
+      forking: {
+        url: `https://rpc.edu-chain.raas.gelato.cloud`,
+        blockNumber: 29558000,
+        enabled: false, // Disabled - EDU Chain RPC doesn't support archival queries for forking
+      },
     },
 
     // Shared Testnet
@@ -44,11 +49,17 @@ const config: HardhatUserConfig = {
       url: `https://base-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`,
       accounts
     },
+    eduChain: {
+      chainId: 41923,
+      url: `https://rpc.edu-chain.raas.gelato.cloud`,
+      accounts
+    },
   },
   etherscan: {
     apiKey: {
       synFuturesABCTestnet: "xxx",
       sepolia: ETHERSCAN_KEY as string,
+      eduChain: "xx"
     },
     customChains: [
       {
@@ -57,6 +68,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://synfutures-abc-testnet.cloud.blockscout.com/api",
           browserURL: "https://synfutures-abc-testnet.cloud.blockscout.com"
+        }
+      },
+      {
+        network: "eduChain",
+        chainId: 41923,
+        urls: {
+          apiURL: "https://educhain.blockscout.com/api",
+          browserURL: "https://educhain.blockscout.com"
         }
       },
     ]
