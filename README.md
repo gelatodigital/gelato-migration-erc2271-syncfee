@@ -25,9 +25,9 @@ To continue using ERC-2771 meta-transactions, you must **deploy your own trusted
 
 ### SyncFee / GelatoRelayContext
 
-**The old SyncFee pattern is being deprecated.** The `callWithSyncFee` method and `GelatoRelayContext` inheritance will no longer be available.
+**The old SyncFee pattern is being deprecated.** The `callWithSyncFee` method and `GelatoRelayContext` inheritance will no longer be available, and Gelato will not provide a replacement.
 
-To continue accepting ERC-20 token payments for relayed transactions, you must **update to direct token transfers**.
+To continue collecting fees from users, you must **implement token collection as part of your custom contract logic** and use **sponsored transactions**.
 
 **Migration:** [SYNCFEE_MIGRATION.md](./SYNCFEE_MIGRATION.md)
 
@@ -43,18 +43,15 @@ contracts/
 ├── mocks/
 │   └── MockERC20Permit.sol                  # Mock token for testing
 ├── SimpleCounterTrusted.sol                 # Example: ERC2771 Sequential
-├── SimpleCounterTrustedConcurrent.sol       # Example: ERC2771 Concurrent
-└── SimpleCounterERC20Fee.sol                # Example: SyncFee Migration
+└── SimpleCounterTrustedConcurrent.sol       # Example: ERC2771 Concurrent
 
 scripts/
 ├── testSponsoredCallTrusted.ts              # Gelato: ERC2771 Sequential
-├── testSponsoredCallTrustedConcurrent.ts    # Gelato: ERC2771 Concurrent
-└── testERC20FeePayment.ts                   # Gelato: SyncFee Migration
+└── testSponsoredCallTrustedConcurrent.ts    # Gelato: ERC2771 Concurrent
 
 test/
 ├── SimpleCounterTrusted.ts
-├── SimpleCounterTrustedConcurrent.ts
-└── SimpleCounterERC20Fee.ts
+└── SimpleCounterTrustedConcurrent.ts
 ```
 
 ---
@@ -72,13 +69,9 @@ npx hardhat test
 npx hardhat test test/SimpleCounterTrusted.ts              # Sequential
 npx hardhat test test/SimpleCounterTrustedConcurrent.ts    # Concurrent
 
-# Test SyncFee migration
-npx hardhat test test/SimpleCounterERC20Fee.ts
-
 # Test with Gelato (requires .env with GELATO_API_KEY)
 npx ts-node scripts/testSponsoredCallTrusted.ts
 npx ts-node scripts/testSponsoredCallTrustedConcurrent.ts
-npx ts-node scripts/testERC20FeePayment.ts
 ```
 
 ### Environment Setup
