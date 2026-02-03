@@ -319,6 +319,21 @@ See [Gas Tank Documentation](https://docs.gelato.network/paymaster-bundler/gasta
 
 ---
 
+## Example Implementation
+
+See the complete example in this repository:
+
+- **Contract:** `contracts/SimpleCounterSponsoredWithFee.sol`
+- **Test:** `test/SimpleCounterSponsoredWithFee.ts`
+
+Run the example:
+
+```bash
+npx hardhat test test/SimpleCounterSponsoredWithFee.ts
+```
+
+---
+
 ## Support
 
 - [Gelato Docs](https://docs.gelato.network)

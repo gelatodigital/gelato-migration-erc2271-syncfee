@@ -43,7 +43,8 @@ contracts/
 ├── mocks/
 │   └── MockERC20Permit.sol                  # Mock token for testing
 ├── SimpleCounterTrusted.sol                 # Example: ERC2771 Sequential
-└── SimpleCounterTrustedConcurrent.sol       # Example: ERC2771 Concurrent
+├── SimpleCounterTrustedConcurrent.sol       # Example: ERC2771 Concurrent
+└── SimpleCounterSponsoredWithFee.sol        # Example: SyncFee Migration
 
 scripts/
 ├── testSponsoredCallTrusted.ts              # Gelato: ERC2771 Sequential
@@ -51,7 +52,8 @@ scripts/
 
 test/
 ├── SimpleCounterTrusted.ts
-└── SimpleCounterTrustedConcurrent.ts
+├── SimpleCounterTrustedConcurrent.ts
+└── SimpleCounterSponsoredWithFee.ts         # SyncFee Migration tests
 ```
 
 ---
@@ -68,6 +70,9 @@ npx hardhat test
 # Test ERC2771 implementations
 npx hardhat test test/SimpleCounterTrusted.ts              # Sequential
 npx hardhat test test/SimpleCounterTrustedConcurrent.ts    # Concurrent
+
+# Test SyncFee migration example
+npx hardhat test test/SimpleCounterSponsoredWithFee.ts
 
 # Test with Gelato (requires .env with GELATO_API_KEY)
 npx ts-node scripts/testSponsoredCallTrusted.ts
